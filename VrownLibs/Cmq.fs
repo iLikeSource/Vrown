@@ -1,4 +1,11 @@
-﻿namespace Vrown.Calculation
+﻿namespace Vrown.Calculation.Cmq
+
+#if INTERACTIVE
+#r "../packages/Newtonsoft.Json.9.0.1/lib/net45/Newtonsoft.Json.dll"
+#endif
+
+open Newtonsoft.Json
+open Newtonsoft.Json.Serialization
 
 module Cmq =  
 
@@ -68,17 +75,16 @@ module ConcentrationLoad =
 
      ///  型定義 
      type t = {
-         l  : float;  (* 材長 *)  
          p1 : float;  (* 荷重 *)
          x1 : float   (* 左端から荷重点までの距離 *)
      } with
 
      ///  CQM荷重に変換 
-     member this.ToCmq () = 
-         Cmq.t.ConcentrationLoadCmq (l=this.l, p=this.p1, x=this.x1) 
+     member this.ToCmq (length) = 
+         Cmq.t.ConcentrationLoadCmq (l=length, p=this.p1, x=this.x1) 
 
      ///  生成
-     static member Create (l, p1, x1) = { l = l; p1 = p1; x1 = x1 }
+     static member Create (p1, x1) = { p1 = p1; x1 = x1 }
 
     
 
@@ -87,7 +93,6 @@ module ConcentrationLoad =
 module DistributionLoad = 
      (** 型定義 *)
      type t = {
-         l  : float;  (* 材長 *)  
          p1 : float;  (* 荷重開始点の単位長さあたり荷重 *)
          p2 : float;  (* 荷重終了点の単位長さあたり荷重 *)
          x1 : float;  (* 左端から荷重開始点までの距離 *)
@@ -95,16 +100,16 @@ module DistributionLoad =
      } with
 
      ///  CMQ荷重に変換 
-     member this.ToCmq () = 
+     member this.ToCmq (length:float) = 
          if this.x1 = this.x2 
          then 
              Cmq.t.Empty ()
          else
              let f (x) = this.p1 + (x - this.x1) * (this.p2 - this.p1) / (this.x2 - this.x1)
-             Cmq.t.Integration (l=this.l, f=f) <| (this.x1, this.x2)
+             Cmq.t.Integration (l=length, f=f) <| (this.x1, this.x2)
      
      ///  生成 
-     static member Create (l, p1, p2, x1, x2) = { l = l; p1 = p1; x1 = x1; p2 = p2; x2 = x2 }
+     static member Create (p1, p2, x1, x2) = { p1 = p1; x1 = x1; p2 = p2; x2 = x2 }
     
 
 ///  梁荷重 
@@ -115,10 +120,38 @@ module BeamLoad =
         | Distribution  of DistributionLoad.t
 
     ///  CMQ荷重に変換 
-    let ToCmq = function
-        | Concentration (x) -> x.ToCmq ()
-        | Distribution  (x) -> x.ToCmq ()
+    let ToCmq (length:float) = function
+        | Concentration (x) -> x.ToCmq (length)
+        | Distribution  (x) -> x.ToCmq (length)
 
-   
+
+/// 
+module Beam = 
+
+    open BeamLoad
+    
+    type t = {
+        length : float
+        loads : BeamLoad.t list
+    } with
+    member this.AddLoad (load:BeamLoad.t) = { this with loads = load :: this.loads }    
+    static member Create (length:float) = { length = length; loads = [] }
+    
+    ///  JSON形式のデータを読み込み 
+    static member Deserialize (json:string) = 
+        JsonConvert.DeserializeObject<t>(json)
+         
+    ///  サンプルデータをJSON形式で取得
+    static member SampleJson () = 
+        let t =
+            t.Create(5.0).AddLoad(Concentration (ConcentrationLoad.t.Create (p1=10.0, x1=3.0)))
+                         .AddLoad(Concentration (ConcentrationLoad.t.Create (p1=15.0, x1=1.0)))
+                         .AddLoad(Distribution (DistributionLoad.t.Create (p1=2.0, p2=4.0, x1=0.0, x2=3.0))) 
+        JsonConvert.SerializeObject(t, Formatting.Indented)   
+
+
+
+
+    
 
 

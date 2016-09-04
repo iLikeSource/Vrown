@@ -1,10 +1,11 @@
 @{
-    var svgModels = ViewBag.SVGModel;    
-
+    var svgModels = ViewBag.SVGModel;
+    var width     = ViewBag.Width;
+    var height    = ViewBag.Height;
 }
 
 <div align="center">
-    <svg width="400" height="400" viewBox="0 0 400 400" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <svg width="@width" height="@height" viewBox="0 0 400 400" version="1.1" xmlns="http://www.w3.org/2000/svg">
         <rect x="0" y="0" width="400" height="400" stroke-width="5" stroke="gray" fill="white"/>
         @Html.Raw(svgModels)
     </svg>

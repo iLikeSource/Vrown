@@ -140,14 +140,16 @@ module Beam =
     ///  JSON形式のデータを読み込み 
     static member Deserialize (json:string) = 
         JsonConvert.DeserializeObject<t>(json)
+    
+    ///  サンプルデータをJSON形式で取得
+    static member Sample () = 
+        t.Create(5.0).AddLoad(Concentration (ConcentrationLoad.t.Create (p1=10.0, x1=3.0)))
+                     .AddLoad(Concentration (ConcentrationLoad.t.Create (p1=15.0, x1=1.0)))
+                     .AddLoad(Distribution (DistributionLoad.t.Create (p1=2.0, p2=4.0, x1=0.0, x2=3.0))) 
          
     ///  サンプルデータをJSON形式で取得
     static member SampleJson () = 
-        let t =
-            t.Create(5.0).AddLoad(Concentration (ConcentrationLoad.t.Create (p1=10.0, x1=3.0)))
-                         .AddLoad(Concentration (ConcentrationLoad.t.Create (p1=15.0, x1=1.0)))
-                         .AddLoad(Distribution (DistributionLoad.t.Create (p1=2.0, p2=4.0, x1=0.0, x2=3.0))) 
-        JsonConvert.SerializeObject(t, Formatting.Indented)   
+        JsonConvert.SerializeObject(t.Sample(), Formatting.Indented)   
 
 
 

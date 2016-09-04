@@ -21,6 +21,12 @@ type ViewModel = {
 type CmqController() =
     inherit Controller()
 
+    let width   = 400
+    let height  = 400
+    let marginL =  40 
+    let marginR =  40 
+    let marginT =  40 
+    let marginB =  40 
 
     [<NonAction>]
     member this.Beam (l) = 
@@ -60,10 +66,60 @@ type CmqController() =
         let beamLoad = BeamLoad.Distribution (DistributionLoad.t.Create (p1, p2, x1, x2))
         { viewModel with actions = Add (beamLoad) :: viewModel.actions }
         |> this.DoActions
+    
+    [<NonAction>]
+    member this.Magnify (length) = 
+        float (width - marginL - marginR) / length         
+        
+    [<NonAction>]
+    member this.Projection magnify (x, y) = 
+        let (ox, oy) = (float (width / 2), float (height / 2))
+        (ox + x * magnify, oy + y * magnify)
+        
 
+    [<NonAction>]
+    member this.DrawBeamLine (viewModel:ViewModel) (contents:SVGContent.t list) = 
+        let length   = viewModel.beam.length
+        let (ox, oy) = (float (width / 2), float (height / 2))
+        let magnify  = this.Magnify length         
+        let (x1, y1) = this.Projection magnify (- 0.5 * length, 0.0)
+        let (x2, y2) = this.Projection magnify (  0.5 * length, 0.0)
+        SVGContent.line (x1, oy, x2, oy) :: contents
+
+    [<NonAction>]
+    member this.DrawConcentrationLoad (viewModel:ViewModel) (contents:SVGContent.t list) = 
+        let length      = viewModel.beam.length
+        let (ox, oy)    = (float (width / 2), float (height / 2))
+        let magnify  = this.Magnify length         
+        let arrowLength = 50.0
+        viewModel.beam.loads
+        |> List.choose (fun x -> 
+            match x with
+            | BeamLoad.Concentration (cLoad) ->
+                let (x, y) = this.Projection magnify (- 0.5 * length + cLoad.x1, 0.0)
+                Some { SVGLine.create (x, y - arrowLength, x, y) 
+                        with arrow = true; stroke_width = 1 }
+            | _ -> None
+        )
+        |> List.map (fun x -> SVGContent.Line (x))
+        |> List.append contents 
+    
+    [<NonAction>]
+    member this.Draw (viewModel:ViewModel) = 
+        List.empty
+        |> this.DrawBeamLine (viewModel) 
+        |> this.DrawConcentrationLoad (viewModel) 
 
     member this.Index () = 
-        this.ViewData.["SVGModel"] <- Generator.Stub()
+        this.ViewData.["Width"]  <- width
+        this.ViewData.["Height"] <- height
+        
+        let viewModel = 
+            { beam    = Beam.t.Sample();
+              actions = [];
+              offset  = 0 } 
+        
+        this.ViewData.["SVGModel"] <- this.Draw (viewModel) |> Generator.dump
         this.View()
 
 

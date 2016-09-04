@@ -101,7 +101,7 @@ module SVGLine =
         map (t) |> SVGHelper.toSVG ("line", "")
 
     let create (x1, y1, x2, y2) = 
-        { x1 = x1; y1 = y1; x2 = x2; y2 = y2; stroke = "black"; stroke_width = 1; display = "inline"; arrow = false }
+        { x1 = x1; y1 = y1; x2 = x2; y2 = y2; stroke = "black"; stroke_width = 3; display = "inline"; arrow = false }
     
 
 module SVGRect = 
@@ -224,10 +224,11 @@ module Generator =
     
     open SVGContent
 
-    let dump(model:SVGContent.t list) = 
-        model 
+    let dump(contents:SVGContent.t list) = 
+        contents 
         |> List.map toSVG
         |> List.reduce (fun dst src -> dst + "\r\n" + src)       
+        |> Printf.sprintf "%s%s" (SVGMarker.defs())
 
     let Stub() = 
         SVGMarker.defs () +

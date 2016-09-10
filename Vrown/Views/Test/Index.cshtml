@@ -1,0 +1,22 @@
+@model Vrown.ViewModels.SubModels.SvgBlock
+@{ 
+    var model = Model;
+}
+
+<script>
+    var index = 1;
+    $(function () {
+        $.ajaxSetup({ cache: false });
+        setInterval(
+            function () {
+                index += 1;
+                $('#update-pane').load('/Test/_SVG?index=' + index);
+            }, 3000
+        );
+    })
+
+</script>
+
+<div id="update-pane" class="jumbotron">
+    @Html.Partial("_SVG", model)
+</div>

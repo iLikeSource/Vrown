@@ -13,26 +13,29 @@
     <strong>X2  :</strong>
     <strong>P1  :</strong>
     <strong>P2  :</strong><br/>
-    <button onclick="updateTable()">更新</button><br/>
+    <button onclick="update()">更新</button><br/>
     <div id="grid_load"></div><BR/>
 </div>
 <div>
-    <svg width="@width" height="@height" viewBox="0 0 400 400" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <svg id="static-svg" width="@width" height="@height" viewBox="0 0 400 400" version="1.1" xmlns="http://www.w3.org/2000/svg">
         <rect x="0" y="0" width="400" height="400" stroke-width="5" stroke="gray" fill="white"/>
         @Html.Raw(svgModels)
     </svg>
+    <!-- 動的に更新するSVG -->
+    <div id="async-svg-position">
+    </div>
 </div>
 
 <script>
     function getTable() {
         return document.getElementById('grid_load');
     }
-    function setupTable(grid, data) {
+    function setupTable(grid, loads) {
         var colHeaderKeys = [ 'Type', 'X1', 'X2', 'P1', 'P2' ]
         return new Handsontable(
             grid,
             {
-                data: data,
+                data: loads,
                 rowHeaders: true,
                 colHeaders: colHeaderKeys,
                 contextMenu: {
@@ -42,6 +45,13 @@
                         remove_row: { name: '行を削除' }
                     }
                 },
+                columns: [
+                    { type: 'autocomplete', source: [ '1', '2' ], strict:true },
+                    { type: 'numeric', format: '0.00' },
+                    { type: 'numeric', format: '0.00' },
+                    { type: 'numeric', format: '0.00' },
+                    { type: 'numeric', format: '0.00' }
+                ]
                 
             }
         );
@@ -49,12 +59,59 @@
     function updateTable() {
         table.render();
     }
-    var data =
+    function update() {
+        updateTable();
+        ajaxPost();
+    }
+
+    function ajaxPost() {
+        var url = '@Url.Action("AjaxPost")';
+        var lengthElem = document.getElementById("length");
+        var length = Number(lengthElem.value);
+        var data = {
+            length: length,
+            loads: loads.map(function (e) {
+                if (e.load_type == null) { e.load_type = 0 }
+                if (e.x1 == null) { e.x1 = 0.0 }
+                if (e.x2 == null) { e.x2 = 0.0 }
+                if (e.p1 == null) { e.p1 = 0.0 }
+                if (e.p2 == null) { e.p2 = 0.0 }
+                return e;
+            })
+        };
+        //var jsonStr = JSON.stringify(data);
+        var json = { data: "x" };
+
+        $.ajaxSetup({ cache: false });
+        $.ajax({
+            url: url,
+            type: 'POST',
+            contentType: "application/json; charset=utf-8",
+            //dataType: 'json',
+            data: JSON.stringify(json),
+
+            success: function (result) {
+                // PartialViewで実装する
+                var staticSvg = document.getElementById('static-svg');
+                var svgText =
+                    '<svg id="async-svg" width="@width" height="@height" viewBox="0 0 400 400" version="1.1" xmlns="http://www.w3.org/2000/svg">' +
+                    '<rect x="0" y="0" width="400" height="400" stroke-width="5" stroke="gray" fill="white"/>' +
+                    result +
+                    '</svg>';
+                var svg = $(svgText);
+                document.getElementById('async-svg-position').appendChild(svgText);
+            },
+            error: function (XMLHttpRequest, textStatus, error) {
+                alert('[ 内部エラーが発生しました ]\n' + error);
+            }
+        });
+    }
+    var loads =
         [{ load_type: null, x1: null, x2: null, p1: null, p2: null },
          { load_type: null, x1: null, x2: null, p1: null, p2: null },
          { load_type: null, x1: null, x2: null, p1: null, p2: null },
          { load_type: null, x1: null, x2: null, p1: null, p2: null },
          { load_type: null, x1: null, x2: null, p1: null, p2: null }];
     var grid = getTable();
-    var table = setupTable(grid, data);
+    var table = setupTable(grid, loads);
 </script>

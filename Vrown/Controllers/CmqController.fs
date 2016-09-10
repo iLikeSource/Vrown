@@ -6,6 +6,7 @@ open System.Linq
 open System.Web
 open System.Web.Mvc
 open System.Web.Mvc.Ajax
+open Newtonsoft.Json
 open SVGGenerator
 open Vrown.Calculation.Cmq
 
@@ -135,18 +136,27 @@ type CmqController() =
 
     ///  クライアントから送られてきたJSONデータを処理する
     [<HttpPost>]
-    member this.Ajax_Post (length, loads:JsonModel array) = 
+    member this.AjaxPost (data:string) = 
+        let partial = new PartialViewResult ()
         if this.Request.IsAjaxRequest () then
-            let viewModel =
-                loads
-                |> Array.fold (fun beam load ->
-                    ofRecord load beam
-                ) ({ beam = Beam.t.Create(length); actions = [] })
-            this.Draw (viewModel) 
-            |> Generator.dump    
-            |> this.Content 
-        else
-            this.Content( "このアクションには直接アクセスできません" )
+            //let viewModel =
+            //    loads
+            //    |> Array.fold (fun beam load ->
+            //        ofRecord load beam
+            //    ) ({ beam = Beam.t.Create(length); actions = [] })
+            let viewModel = { beam = Beam.t.Create(1.0); actions = [] }
+            partial.ViewData.["SVGModel"] <- this.Draw (viewModel) |> Generator.dump       
+        partial
+
+    member this.Svg() = 
+        let partialView = new PartialViewResult()
+        let viewModel = 
+            { beam    = Beam.t.Sample();
+              actions = [] } 
+        
+        partialView.ViewData.["SVGModel"] <- this.Draw (viewModel) |> Generator.dump
+        partialView
+            
 
     member this.Index () = 
         this.ViewData.["Width"]  <- width

@@ -236,15 +236,16 @@ module Generator =
     open SVGContent
 
     let dump(contents:SVGContent.t list) = 
-        contents 
-        |> List.map toSVG
-        |> List.reduce (fun dst src -> dst + "\r\n" + src)       
-        |> Printf.sprintf "%s%s" (SVGMarker.defs())
+        let svgElements =
+            contents 
+            |> List.map toSVG
+            |> List.reduce (fun dst src -> dst + "\r\n" + src)       
+            |> Printf.sprintf "%s%s" (SVGMarker.defs())
+        SVGMarker.defs () + svgElements
 
     let Stub() = 
-        SVGMarker.defs () +
-        dump([ line (10.0, 10.0, 150.0, 200.0) |> display "none"; 
-               line (30.0, 100.0, 100.0, 50.0) |> display "none";
-               line (30.0, 100.0, 100.0, 150.0) |> arrow true;
-               rect (50.0, 20.0, 40.0, 20.0) |> fill "rgba(0,0,200,0.5)" ])
+        [ line (10.0, 10.0, 150.0, 200.0) |> display "none"; 
+          line (30.0, 100.0, 100.0, 50.0) |> display "none";
+          line (30.0, 100.0, 100.0, 150.0) |> arrow true;
+          rect (50.0, 20.0, 40.0, 20.0) |> fill "rgba(0,0,200,0.5)" ]
         

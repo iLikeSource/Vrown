@@ -5,10 +5,18 @@
 }
 
 <div>
-    <div>ïîçﬁí∑:<input id="length" type="text" /></div><BR/>
+    <br/>
+    <br/>
+    <div>ïîçﬁí∑:<input id="length" type="text" /></div><br/>
+    <strong>Type:</strong>
+    <strong>X1  :</strong>
+    <strong>X2  :</strong>
+    <strong>P1  :</strong>
+    <strong>P2  :</strong><br/>
+    <button onclick="updateTable()">çXêV</button><br/>
     <div id="grid_load"></div><BR/>
 </div>
-<div align="center">
+<div>
     <svg width="@width" height="@height" viewBox="0 0 400 400" version="1.1" xmlns="http://www.w3.org/2000/svg">
         <rect x="0" y="0" width="400" height="400" stroke-width="5" stroke="gray" fill="white"/>
         @Html.Raw(svgModels)
@@ -16,11 +24,11 @@
 </div>
 
 <script>
-    
-    function setup_table(grid) {
+    function getTable() {
+        return document.getElementById('grid_load');
+    }
+    function setupTable(grid, data) {
         var colHeaderKeys = [ 'Type', 'X1', 'X2', 'P1', 'P2' ]
-        var data = { load_type: null, x1: null, x2: null, p1: null, p2: null };
-        var data = [ [ null, null, null, null, null ] ];
         return new Handsontable(
             grid,
             {
@@ -38,6 +46,15 @@
             }
         );
     }
-    var grid = document.getElementById('grid_load');
-    setup_table(grid);
+    function updateTable() {
+        table.render();
+    }
+    var data =
+        [{ load_type: null, x1: null, x2: null, p1: null, p2: null },
+         { load_type: null, x1: null, x2: null, p1: null, p2: null },
+         { load_type: null, x1: null, x2: null, p1: null, p2: null },
+         { load_type: null, x1: null, x2: null, p1: null, p2: null },
+         { load_type: null, x1: null, x2: null, p1: null, p2: null }];
+    var grid = getTable();
+    var table = setupTable(grid, data);
 </script>

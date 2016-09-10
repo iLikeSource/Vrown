@@ -13,9 +13,16 @@ type Action =
     | Add of BeamLoad.t 
 
 type ViewModel = {
-    beam : Beam.t;
-    actions : Action list;
-    offset : int        
+    beam : Beam.t
+    actions : Action list        
+}
+
+type JsonModel = {
+    load_type : int
+    p1 : float
+    p2 : float
+    x1 : float
+    x2 : float
 }
 
 type CmqController() =
@@ -28,11 +35,24 @@ type CmqController() =
     let marginT =  40 
     let marginB =  40 
 
+    let ofRecord (x:JsonModel) (viewModel:ViewModel) = 
+        match x.load_type with
+        | 1 -> 
+            let load = BeamLoad.t.Concentration ({ p1=x.p1; x1=x.x1 })
+            let beam = viewModel.beam.AddLoad(load)
+            { beam = beam; actions = Add (load) :: viewModel.actions }
+        | 2 -> 
+            let load = BeamLoad.t.Distribution ({ p1=x.p1; p2=x.p2; x1=x.x1; x2=x.x2 })
+            let beam = viewModel.beam.AddLoad(load)
+            { beam = beam; actions = Add (load) :: viewModel.actions }
+        | _ -> 
+            viewModel
+             
+
     [<NonAction>]
     member this.Beam (l) = 
         { beam = Beam.t.Create (l);
-          actions = [];
-          offset = 0 }
+          actions = [] }
 
     [<NonAction>]
     member this.DoAction (beam:Beam.t, act:Action) = 
@@ -49,7 +69,7 @@ type CmqController() =
             |> List.mapi (fun i act -> (i, act))
             |> List.choose (fun (i, act) -> if i < length then Some (act) else None)
             |> List.fold (fun beam act -> this.DoAction (beam, act)) viewModel.beam
-        { viewModel with beam = beam; offset = offset }
+        { viewModel with beam = beam }
     
     [<NonAction>]
     member this.DoActions (viewModel:ViewModel) = 
@@ -112,14 +132,29 @@ type CmqController() =
         |> this.DrawBeamLine (viewModel) 
         |> this.DrawConcentrationLoad (viewModel) 
 
+
+    ///  クライアントから送られてきたJSONデータを処理する
+    [<HttpPost>]
+    member this.Ajax_Post (length, loads:JsonModel array) = 
+        if this.Request.IsAjaxRequest () then
+            let viewModel =
+                loads
+                |> Array.fold (fun beam load ->
+                    ofRecord load beam
+                ) ({ beam = Beam.t.Create(length); actions = [] })
+            this.Draw (viewModel) 
+            |> Generator.dump    
+            |> this.Content 
+        else
+            this.Content( "このアクションには直接アクセスできません" )
+
     member this.Index () = 
         this.ViewData.["Width"]  <- width
         this.ViewData.["Height"] <- height
         
         let viewModel = 
             { beam    = Beam.t.Sample();
-              actions = [];
-              offset  = 0 } 
+              actions = [] } 
         
         this.ViewData.["SVGModel"] <- this.Draw (viewModel) |> Generator.dump
         this.View()

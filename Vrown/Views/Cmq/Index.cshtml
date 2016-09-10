@@ -4,9 +4,40 @@
     var height    = ViewBag.Height;
 }
 
+<div>
+    <div>•”Ş’·:<input id="length" type="text" /></div><BR/>
+    <div id="grid_load"></div><BR/>
+</div>
 <div align="center">
     <svg width="@width" height="@height" viewBox="0 0 400 400" version="1.1" xmlns="http://www.w3.org/2000/svg">
         <rect x="0" y="0" width="400" height="400" stroke-width="5" stroke="gray" fill="white"/>
         @Html.Raw(svgModels)
     </svg>
 </div>
+
+<script>
+    
+    function setup_table(grid) {
+        var colHeaderKeys = [ 'Type', 'X1', 'X2', 'P1', 'P2' ]
+        var data = { load_type: null, x1: null, x2: null, p1: null, p2: null };
+        var data = [ [ null, null, null, null, null ] ];
+        return new Handsontable(
+            grid,
+            {
+                data: data,
+                rowHeaders: true,
+                colHeaders: colHeaderKeys,
+                contextMenu: {
+                    items: {
+                        row_above: { name: 'ã‚És‚ğ‘}“ü' },
+                        row_below: { name: '‰º‚És‚ğ‘}“ü' },
+                        remove_row: { name: 's‚ğíœ' }
+                    }
+                },
+                
+            }
+        );
+    }
+    var grid = document.getElementById('grid_load');
+    setup_table(grid);
+</script>

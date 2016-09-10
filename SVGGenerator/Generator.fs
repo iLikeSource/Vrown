@@ -1,5 +1,6 @@
 ﻿namespace SVGGenerator
 
+
 module SVGHelper = 
     
     let intToString (x) = Printf.sprintf "%d" x
@@ -8,6 +9,9 @@ module SVGHelper =
         xs |> List.fold (fun dst (x, y) ->
             dst + Printf.sprintf "%.0f,%.0f " x y
         ) "" 
+
+    let systemColors = 
+        [ "black"; "white"; "red"; "purple"; "green"; "yellow"; "blue" ]
      
     let toSVG (elementName:string, value:string) (attrs:(string * string) list) = 
         let attrString = 
@@ -47,26 +51,30 @@ module SVGMarker =
           ("viewBox", "0 0 40 40");
           ("orient", orientToString t.orient) ]
 
-    let arrowHeadId = "arrow_head" 
+    let arrowHeadId (fill) = 
+        Printf.sprintf "arrowhead-%s" fill
 
-    let arrowHeadMarker = 
-        { id = arrowHeadId;
+    let arrowHeadMarker (fill:string) = 
+        { id = arrowHeadId (fill);
           units = "strokeWidth";
           width = 40;
           height = 40;
-          refX = 20;
+          refX = 40;
           refY = 20;
           orient = Auto }
         |> map
-        |> toSVG ("marker", "<polygon points=\"20,20 20,10 40,20 20,30 \" fill=\"black\">")
+        |> toSVG ("marker", Printf.sprintf "<polygon points=\"20,20 20,10 40,20 20,30 \" fill=\"%s\">" fill)
 
 
 
     let defs () =
-        "<defs>" + "\r\n" +
-        arrowHeadMarker + "\r\n" +
-        "</defs>" + "\r\n" 
-        
+        SVGHelper.systemColors
+        |> List.map (fun color ->
+            "<defs>" + "\r\n" +
+            arrowHeadMarker(color) + "\r\n" +
+            "</defs>" + "\r\n" 
+        )
+        |> List.fold (fun dst src -> dst + src) ""
 
 
 module SVGLine = 
@@ -93,7 +101,10 @@ module SVGLine =
               ("stroke-width", intToString t.stroke_width);
               ("display", t.display) ]
         if t.arrow then 
-            lineMap |> List.append [ ("marker-end", Printf.sprintf "url(#%s)" SVGMarker.arrowHeadId) ]
+            lineMap 
+            |> List.append [ ("marker-end", 
+                              Printf.sprintf "url(#%s)" 
+                              <| SVGMarker.arrowHeadId(t.stroke)) ]
         else
             lineMap
 

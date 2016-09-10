@@ -88,8 +88,8 @@ type CmqController() =
 
     [<NonAction>]
     member this.DrawConcentrationLoad (viewModel:ViewModel) (contents:SVGContent.t list) = 
-        let length      = viewModel.beam.length
-        let (ox, oy)    = (float (width / 2), float (height / 2))
+        let length   = viewModel.beam.length
+        let (ox, oy) = (float (width / 2), float (height / 2))
         let magnify  = this.Magnify length         
         let arrowLength = 50.0
         viewModel.beam.loads
@@ -98,7 +98,9 @@ type CmqController() =
             | BeamLoad.Concentration (cLoad) ->
                 let (x, y) = this.Projection magnify (- 0.5 * length + cLoad.x1, 0.0)
                 Some { SVGLine.create (x, y - arrowLength, x, y) 
-                        with arrow = true; stroke_width = 1 }
+                        with arrow = true; 
+                             stroke_width = 1;
+                             stroke = "blue" }
             | _ -> None
         )
         |> List.map (fun x -> SVGContent.Line (x))
